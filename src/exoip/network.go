@@ -1,14 +1,14 @@
 package exoip
 
 import (
-	"errors"
 	"encoding/hex"
+	"errors"
 	"net"
-	"time"
 	"os"
+	"time"
 )
 
-func BufToPayload(buf []byte) (*Payload, error) {
+func bufToPayload(buf []byte) (*Payload, error) {
 
 	protobuf := make([]byte, 2)
 	protobuf = buf[0:2]
@@ -29,8 +29,9 @@ func BufToPayload(buf []byte) (*Payload, error) {
 	return &Payload{NicId: UUIDToStr(uuidbuf), Priority: buf[2], ExoIP: ip}, nil
 }
 
-func (engine *Engine) NetworkLoop(listen_address string) error {
-	ServerAddr,err := net.ResolveUDPAddr("udp", listen_address)
+// NetworkLoop
+func (engine *Engine) NetworkLoop(listenaddress string) error {
+	ServerAddr, err := net.ResolveUDPAddr("udp", listenaddress)
 	AssertSuccess(err)
 	ServerConn, err := net.ListenUDP("udp", ServerAddr)
 	AssertSuccess(err)
@@ -46,25 +47,26 @@ func (engine *Engine) NetworkLoop(listen_address string) error {
 			Logger.Warning("bad network payload")
 
 		}
-		payload, err := BufToPayload(buf)
+		payload, err := bufToPayload(buf)
 		if err != nil {
 			Logger.Warning("unparseable payload")
 		} else {
-			engine.UpdatePeer(*addr, payload)
+			engine.updatePeer(*addr, payload)
 		}
 	}
 }
 
+// NetworkAdvertise
 func (engine *Engine) NetworkAdvertise() {
 	for {
 		time.Sleep(time.Duration(engine.Interval) * time.Second)
 		go func() {
-			for _, peer := range(engine.Peers) {
+			for _, peer := range engine.Peers {
 				/* do not account for errors */
 				peer.Conn.Write(engine.SendBuf)
 			}
 			engine.LastSend = CurrentTimeMillis()
 		}()
-		go engine.CheckState()
+		go engine.checkState()
 	}
 }

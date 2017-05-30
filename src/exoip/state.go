@@ -4,17 +4,17 @@ import (
 	"time"
 )
 
-func (engine *Engine) SwitchToBackup() {
+func (engine *Engine) switchToBackup() {
 	Logger.Warning("switching to back-up state")
 	engine.ReleaseNic(engine.NicId)
 }
 
-func (engine *Engine) SwitchToMaster() {
+func (engine *Engine) switchToMaster() {
 	Logger.Warning("switching to master state")
 	engine.ObtainNic(engine.NicId)
 }
 
-func (engine *Engine) PerformStateTransition(state State) {
+func (engine *Engine) performStateTransition(state State) {
 
 	if engine.State == state {
 		return
@@ -23,13 +23,13 @@ func (engine *Engine) PerformStateTransition(state State) {
 	engine.State = state
 
 	if state == StateBackup {
-		engine.SwitchToBackup()
+		engine.switchToBackup()
 	} else {
-		engine.SwitchToMaster()
+		engine.switchToMaster()
 	}
 }
 
-func (engine *Engine) CheckState() {
+func (engine *Engine) checkState() {
 
 	time.Sleep(Skew)
 
@@ -39,26 +39,26 @@ func (engine *Engine) CheckState() {
 		return
 	}
 
-	dead_peers := make([]*Peer, 0)
-	best_advertisement := true
+	deadPeers := make([]*Peer, 0)
+	bestAdvertisement := true
 
-	for _, peer := range(engine.Peers) {
-		if engine.PeerIsNewlyDead(now, peer) {
-			dead_peers = append(dead_peers, peer)
+	for _, peer := range engine.Peers {
+		if engine.peerIsNewlyDead(now, peer) {
+			deadPeers = append(deadPeers, peer)
 		} else {
-			if engine.BackupOf(peer) {
-				best_advertisement = false
+			if engine.backupOf(peer) {
+				bestAdvertisement = false
 			}
 		}
 	}
 
-	if best_advertisement == false {
-		engine.PerformStateTransition(StateBackup)
+	if bestAdvertisement == false {
+		engine.performStateTransition(StateBackup)
 	} else {
-		engine.PerformStateTransition(StateMaster)
+		engine.performStateTransition(StateMaster)
 	}
 
-	for _, peer := range(dead_peers) {
-		engine.HandleDeadPeer(peer)
+	for _, peer := range deadPeers {
+		engine.handleDeadPeer(peer)
 	}
 }

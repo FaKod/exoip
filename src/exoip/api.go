@@ -3,43 +3,44 @@ package exoip
 import (
 	"errors"
 	"fmt"
-	"github.com/pyr/egoscale/src/egoscale"
 	"os"
+
+	"github.com/pyr/egoscale/src/egoscale"
 )
 
 func FetchMyNic(ego *egoscale.Client, mserver string) (string, error) {
 
-	instance_id, err := FetchMetadata(mserver, "/latest/instance-id")
+	instanceID, err := FetchMetadata(mserver, "/latest/instance-id")
 	if err != nil {
 		return "", err
 	}
-	vm_info, err := ego.GetVirtualMachine(instance_id)
+	vmInfo, err := ego.GetVirtualMachine(instanceID)
 	if err != nil {
 		return "", err
 	}
-	if len(vm_info.Nic) < 1 {
+	if len(vmInfo.Nic) < 1 {
 		return "", errors.New("cannot find virtual machine Nic ID")
 	}
-	return vm_info.Nic[0].Id, nil
+	return vmInfo.Nic[0].Id, nil
 }
 
 func (engine *Engine) FetchNicAndVm() {
 
 	mserver, err := FindMetadataServer()
 	AssertSuccess(err)
-	instance_id, err := FetchMetadata(mserver, "/latest/instance-id")
+	instanceID, err := FetchMetadata(mserver, "/latest/instance-id")
 	AssertSuccess(err)
 
-	vm_info, err := engine.Exo.GetVirtualMachine(instance_id)
+	vmInfo, err := engine.Exo.GetVirtualMachine(instanceID)
 	AssertSuccess(err)
 
-	if len(vm_info.Nic) < 1 {
+	if len(vmInfo.Nic) < 1 {
 		Logger.Crit("cannot find virtual machine Nic ID")
 		fmt.Fprintln(os.Stderr, "cannot find virtual machine Nic ID")
 		os.Exit(1)
 	}
-	engine.ExoVM = vm_info.Id
-	engine.NicId = vm_info.Nic[0].Id
+	engine.ExoVM = vmInfo.Id
+	engine.NicId = vmInfo.Nic[0].Id
 }
 
 func (engine *Engine) ObtainNic(nic_id string) error {
@@ -63,19 +64,19 @@ func (engine *Engine) ReleaseMyNic() error {
 			err))
 		return err
 	}
-	nic_address_id := ""
-	for _, sec_ip := range(vm.Nic[0].Secondaryip) {
+	nicAddressID := ""
+	for _, sec_ip := range vm.Nic[0].Secondaryip {
 		if sec_ip.IpAddress == engine.ExoIP.String() {
-			nic_address_id = sec_ip.Id
+			nicAddressID = sec_ip.Id
 			break
 		}
 	}
-	if len(nic_address_id) == 0 {
+	if len(nicAddressID) == 0 {
 		Logger.Warning("could not remove ip from nic: unknown association")
 		return fmt.Errorf("could not remove ip from nic: unknown association")
 	}
 
-	_, err = engine.Exo.RemoveIpFromNic(nic_address_id)
+	_, err = engine.Exo.RemoveIpFromNic(nicAddressID)
 	if err != nil {
 		Logger.Crit(fmt.Sprintf("could not dissociate ip %s: %s",
 			engine.ExoIP.String(), err))
@@ -85,7 +86,7 @@ func (engine *Engine) ReleaseMyNic() error {
 	return nil
 }
 
-func (engine *Engine) ReleaseNic(nic_id string)  {
+func (engine *Engine) ReleaseNic(nic_id string) {
 
 	vms, err := engine.Exo.ListVirtualMachines()
 	if err != nil {
@@ -94,34 +95,34 @@ func (engine *Engine) ReleaseNic(nic_id string)  {
 		return
 	}
 
-	nic_address_id := ""
-	for _, vm := range(vms) {
+	nicAddressID := ""
+	for _, vm := range vms {
 		if vm.Nic[0].Id == nic_id {
-			for _, sec_ip := range(vm.Nic[0].Secondaryip) {
+			for _, sec_ip := range vm.Nic[0].Secondaryip {
 				if sec_ip.IpAddress == engine.ExoIP.String() {
-					nic_address_id = sec_ip.Id
+					nicAddressID = sec_ip.Id
 					break
 				}
 			}
 		}
 	}
 
-	if len(nic_address_id) == 0 {
+	if len(nicAddressID) == 0 {
 		Logger.Warning("could not remove ip from nic: unknown association")
 		return
 	}
 
-	_, err = engine.Exo.RemoveIpFromNic(nic_address_id)
+	_, err = engine.Exo.RemoveIpFromNic(nicAddressID)
 	if err != nil {
 		Logger.Crit(fmt.Sprintf("could not remove ip from nic %s (%s): %s",
-			nic_id, nic_address_id, err))
+			nic_id, nicAddressID, err))
 	}
 	Logger.Info(fmt.Sprintf("released ip %s from nic %s", engine.ExoIP.String(), nic_id))
 }
 
 func VMHasSecurityGroup(vm *egoscale.VirtualMachine, sgname string) bool {
 
-	for _, sg := range(vm.SecurityGroups) {
+	for _, sg := range vm.SecurityGroups {
 		if sg.Name == sgname {
 			return true
 		}
@@ -137,7 +138,7 @@ func GetSecurityGroupPeers(ego *egoscale.Client, sgname string) ([]string, error
 		return nil, err
 	}
 
-	for _, vm := range(vms) {
+	for _, vm := range vms {
 		if VMHasSecurityGroup(vm, sgname) {
 			primary_ip := vm.Nic[0].Ipaddress
 			peers = append(peers, fmt.Sprintf("%s:%d", primary_ip, DefaultPort))
@@ -147,14 +148,14 @@ func GetSecurityGroupPeers(ego *egoscale.Client, sgname string) ([]string, error
 	return peers, nil
 }
 
-func FindPeerNic(ego *egoscale.Client, ip string) (string, error) {
+func findPeerNic(ego *egoscale.Client, ip string) (string, error) {
 
 	vms, err := ego.ListVirtualMachines()
 	if err != nil {
 		return "", err
 	}
 
-	for _, vm := range(vms) {
+	for _, vm := range vms {
 
 		if vm.Nic[0].Ipaddress == ip {
 			return vm.Nic[0].Id, nil
