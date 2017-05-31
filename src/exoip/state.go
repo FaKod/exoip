@@ -31,7 +31,7 @@ func (engine *Engine) performStateTransition(state State) {
 
 func (engine *Engine) checkState() {
 
-	time.Sleep(Skew)
+	time.Sleep(skew)
 
 	now := CurrentTimeMillis()
 

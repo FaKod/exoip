@@ -15,7 +15,7 @@ func bufToPayload(buf []byte) (*Payload, error) {
 	uuidbuf := make([]byte, 16)
 	uuidbuf = buf[8:24]
 
-	if ProtoVersion != hex.EncodeToString(protobuf) {
+	if protoVersion != hex.EncodeToString(protobuf) {
 		Logger.Warning("bad protocol version")
 		return nil, errors.New("bad protocol version")
 	}
@@ -26,7 +26,7 @@ func bufToPayload(buf []byte) (*Payload, error) {
 	}
 
 	ip := net.IPv4(buf[4], buf[5], buf[6], buf[7])
-	return &Payload{NicId: UUIDToStr(uuidbuf), Priority: buf[2], ExoIP: ip}, nil
+	return &Payload{NicId: convUUIDToStr(uuidbuf), Priority: buf[2], ExoIP: ip}, nil
 }
 
 // NetworkLoop

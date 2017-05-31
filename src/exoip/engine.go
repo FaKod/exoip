@@ -1,46 +1,49 @@
 package exoip
 
 import (
+	"encoding/hex"
 	"errors"
-	"time"
-	"strings"
 	"fmt"
 	"net"
-	"encoding/hex"
 	"os"
+	"strings"
+	"time"
+
 	"github.com/pyr/egoscale/src/egoscale"
 )
 
+// DefaultPort default process port
 const DefaultPort = 12345
-const ProtoVersion = "0201"
-const SkewMillis = 100
-const Skew time.Duration = 100 * time.Millisecond
+const protoVersion = "0201"
+const skewMillis = 100
+const skew time.Duration = 100 * time.Millisecond
 
-var Verbose bool = false
+// Verbose
+var Verbose = false
 
-func remove_dash(r rune) rune {
-	if (r == '-') {
+func removeDash(r rune) rune {
+	if r == '-' {
 		return -1
 	}
 	return r
 }
 
-func StrToUUID(ustr string) ([]byte, error) {
+func convStrToUUID(ustr string) ([]byte, error) {
 
-	if (len(ustr) != 36) {
+	if len(ustr) != 36 {
 		return nil, fmt.Errorf("NicId %s has wrong length", ustr)
 	}
 
 	ustr = strings.ToLower(ustr)
-	for _, c := range(ustr) {
-		if (!(c >= 'a' && c <= 'f') &&
+	for _, c := range ustr {
+		if !(c >= 'a' && c <= 'f') &&
 			!(c >= '0' && c <= '9') &&
-			!(c == '-')) {
+			!(c == '-') {
 			return nil, errors.New("Bad characters in NicId")
 		}
 	}
-	ustr = strings.Map(remove_dash, ustr)
-	if (len(ustr) != 32) {
+	ustr = strings.Map(removeDash, ustr)
+	if len(ustr) != 32 {
 		return nil, errors.New("NicId has wrong length")
 	}
 
@@ -54,7 +57,7 @@ func StrToUUID(ustr string) ([]byte, error) {
 	return ba, nil
 }
 
-func UUIDToStr(uuidbuf []byte) string {
+func convUUIDToStr(uuidbuf []byte) string {
 
 	str := hex.EncodeToString(uuidbuf)
 
@@ -63,16 +66,17 @@ func UUIDToStr(uuidbuf []byte) string {
 	return hexuuid
 }
 
+// NewWatchdogEngine
 func NewWatchdogEngine(client *egoscale.Client, ip string, interval int,
-	prio int, dead_ratio int, peers []string) *Engine {
+	prio int, deadRatio int, peers []string) *Engine {
 
 	mserver, err := FindMetadataServer()
 	AssertSuccess(err)
 	nicid, err := FetchMyNic(client, mserver)
-	uuidbuf, err := StrToUUID(nicid)
+	uuidbuf, err := convStrToUUID(nicid)
 	AssertSuccess(err)
 	sendbuf := make([]byte, 24)
-	protobuf, err := hex.DecodeString(ProtoVersion)
+	protobuf, err := hex.DecodeString(protoVersion)
 	AssertSuccess(err)
 	netip := net.ParseIP(ip)
 	if netip == nil {
@@ -98,31 +102,30 @@ func NewWatchdogEngine(client *egoscale.Client, ip string, interval int,
 	sendbuf[6] = netbytes[2]
 	sendbuf[7] = netbytes[3]
 
-	for i, b := range(uuidbuf) {
+	for i, b := range uuidbuf {
 		sendbuf[i+8] = b
 	}
 
 	engine := Engine{
-		DeadRatio: dead_ratio,
-		Interval: interval,
-		Priority: sendbuf[2],
-		SendBuf: sendbuf,
-		Peers: make([]*Peer, 0),
-		State: StateBackup,
-		NicId: nicid,
-		ExoIP: netip,
-		Exo: client,
-		InitHoldOff: CurrentTimeMillis() + (1000 * int64(dead_ratio) * int64(interval)) + SkewMillis,
+		DeadRatio:   deadRatio,
+		Interval:    interval,
+		Priority:    sendbuf[2],
+		SendBuf:     sendbuf,
+		Peers:       make([]*Peer, 0),
+		State:       StateBackup,
+		NicId:       nicid,
+		ExoIP:       netip,
+		Exo:         client,
+		InitHoldOff: CurrentTimeMillis() + (1000 * int64(deadRatio) * int64(interval)) + skewMillis,
 	}
-	for _, p := range(peers) {
+	for _, p := range peers {
 		engine.Peers = append(engine.Peers, newPeer(client, p))
 	}
 	return &engine
 }
 
+// NewEngine
 func NewEngine(client *egoscale.Client, ip string) *Engine {
-
-
 	netip := net.ParseIP(ip)
 	if netip == nil {
 		Logger.Crit("Could not parse IP")
@@ -138,7 +141,7 @@ func NewEngine(client *egoscale.Client, ip string) *Engine {
 
 	engine := Engine{
 		ExoIP: netip,
-		Exo: client,
+		Exo:   client,
 	}
 	engine.FetchNicAndVm()
 	return &engine
