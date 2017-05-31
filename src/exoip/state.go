@@ -17,6 +17,13 @@ func (engine *Engine) switchToMaster() {
 func (engine *Engine) performStateTransition(state State) {
 
 	if engine.State == state {
+		if state == StateMaster {
+			engine.SetNicRatioCounter = engine.SetNicRatioCounter - 1
+			if engine.SetNicRatioCounter <= 0 {
+				engine.SetNicRatioCounter = engine.SetNicRatio
+				engine.ObtainNic(engine.NicId)
+			}
+		}
 		return
 	}
 

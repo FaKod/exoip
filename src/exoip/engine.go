@@ -68,7 +68,7 @@ func convUUIDToStr(uuidbuf []byte) string {
 
 // NewWatchdogEngine
 func NewWatchdogEngine(client *egoscale.Client, ip string, interval int,
-	prio int, deadRatio int, peers []string) *Engine {
+	prio int, deadRatio int, setNicRatio int, peers []string) *Engine {
 
 	mserver, err := FindMetadataServer()
 	AssertSuccess(err)
@@ -107,16 +107,18 @@ func NewWatchdogEngine(client *egoscale.Client, ip string, interval int,
 	}
 
 	engine := Engine{
-		DeadRatio:   deadRatio,
-		Interval:    interval,
-		Priority:    sendbuf[2],
-		SendBuf:     sendbuf,
-		Peers:       make([]*Peer, 0),
-		State:       StateBackup,
-		NicId:       nicid,
-		ExoIP:       netip,
-		Exo:         client,
-		InitHoldOff: CurrentTimeMillis() + (1000 * int64(deadRatio) * int64(interval)) + skewMillis,
+		DeadRatio:          deadRatio,
+		SetNicRatio:        setNicRatio,
+		Interval:           interval,
+		Priority:           sendbuf[2],
+		SendBuf:            sendbuf,
+		Peers:              make([]*Peer, 0),
+		State:              StateBackup,
+		NicId:              nicid,
+		ExoIP:              netip,
+		Exo:                client,
+		InitHoldOff:        CurrentTimeMillis() + (1000 * int64(deadRatio) * int64(interval)) + skewMillis,
+		SetNicRatioCounter: setNicRatio,
 	}
 	for _, p := range peers {
 		engine.Peers = append(engine.Peers, newPeer(client, p))

@@ -62,6 +62,8 @@ environment variable:
 	    Security-Group to build peer list from
     -r int (or IF_DEAD_RATIO)
     	Dead ratio (default 3)
+	-nr int (or IF_SETNIC_RATIO)
+		set Nic Ratio in multiples of Advertisement interval (default 30)
     -t int (or IF_ADVERTISEMENT_INTERVAL)
     	Advertisement interval in seconds (default 1)
     -xi string (or IF_ADDRESS)

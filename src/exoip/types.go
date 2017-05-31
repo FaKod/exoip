@@ -2,23 +2,23 @@ package exoip
 
 import (
 	"net"
-	"github.com/pyr/egoscale/src/egoscale"
 
+	"github.com/pyr/egoscale/src/egoscale"
 )
 
 type Peer struct {
-	IP		net.IP
-	Dead            bool
-	Priority	byte
-	LastSeen	int64
-	NicId		string
-	Conn		*net.UDPConn
+	IP       net.IP
+	Dead     bool
+	Priority byte
+	LastSeen int64
+	NicId    string
+	Conn     *net.UDPConn
 }
 
 type Payload struct {
-	Priority	byte
-	ExoIP		net.IP
-	NicId		string
+	Priority byte
+	ExoIP    net.IP
+	NicId    string
 }
 
 type State int
@@ -29,17 +29,19 @@ const (
 )
 
 type Engine struct {
-	DeadRatio	int
-	Interval	int
-	Priority	byte
-	VHID		byte
-	SendBuf		[]byte
-	Peers		[]*Peer
-	State		State
-	LastSend	int64
-	InitHoldOff	int64
-	ExoVM		string
-	NicId		string
-	ExoIP		net.IP
-	Exo             *egoscale.Client
+	DeadRatio          int
+	SetNicRatio        int
+	Interval           int
+	Priority           byte
+	VHID               byte
+	SendBuf            []byte
+	Peers              []*Peer
+	State              State
+	LastSend           int64
+	InitHoldOff        int64
+	SetNicRatioCounter int
+	ExoVM              string
+	NicId              string
+	ExoIP              net.IP
+	Exo                *egoscale.Client
 }

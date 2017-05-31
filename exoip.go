@@ -16,6 +16,7 @@ var timer = flag.Int("t", 1, "Advertisement interval in seconds")
 var prio = flag.Int("P", 10, "Host priority (lowest wins)")
 var address = flag.String("l", fmt.Sprintf(":%d", exoip.DefaultPort), "Address to bind to")
 var dead_ratio = flag.Int("r", 3, "Dead ratio")
+var setnic_ratio = flag.Int("nr", 30, "set Nic ratio in multibles of Advertisement interval")
 var exo_key = flag.String("xk", "", "Exoscale API Key")
 var exo_secret = flag.String("xs", "", "Exoscale API Secret")
 var exo_endpoint = flag.String("xe", "https://api.exoscale.ch/compute", "Exoscale API Endpoint")
@@ -59,6 +60,7 @@ func ParseEnvironment() {
 		EnvEquiv{Env: "IF_ADDRESS", Flag: "xi"},
 		EnvEquiv{Env: "IF_BIND_TO", Flag: "l"},
 		EnvEquiv{Env: "IF_DEAD_RATIO", Flag: "r"},
+		EnvEquiv{Env: "IF_SETNIC_RATIO", Flag: "nr"},
 		EnvEquiv{Env: "IF_ADVERTISEMENT_INTERVAL", Flag: "t"},
 		EnvEquiv{Env: "IF_HOST_PRIORITY", Flag: "P"},
 		EnvEquiv{Env: "IF_EXOSCALE_API_KEY", Flag: "xk"},
@@ -142,6 +144,7 @@ func CheckConfiguration() {
 		fmt.Printf("\thost-priority: %d\n", *prio)
 		fmt.Printf("\tadvertisement-interval: %d\n", *timer)
 		fmt.Printf("\tdead-ratio: %d\n", *dead_ratio)
+		fmt.Printf("\tsetnic-ratio: %d\n", *setnic_ratio)
 		fmt.Printf("\texoscale-api-key: %s\n", *exo_key)
 		fmt.Printf("\texoscale-api-secret: %sXXXX\n", (*exo_secret)[0:2])
 		fmt.Printf("\texoscale-api-endpoint: %s\n", *exo_endpoint)
@@ -151,6 +154,7 @@ func CheckConfiguration() {
 		exoip.Logger.Info(fmt.Sprintf("\thost-priority: %d\n", *prio))
 		exoip.Logger.Info(fmt.Sprintf("\tadvertisement-interval: %d\n", *timer))
 		exoip.Logger.Info(fmt.Sprintf("\tdead-ratio: %d\n", *dead_ratio))
+		exoip.Logger.Info(fmt.Sprintf("\tdsetnic-ratio: %d\n", *setnic_ratio))
 		exoip.Logger.Info(fmt.Sprintf("\texoscale-api-key: %s\n", *exo_key))
 		exoip.Logger.Info(fmt.Sprintf("\texoscale-api-secret: %sXXXX\n", (*exo_secret)[0:2]))
 		exoip.Logger.Info(fmt.Sprintf("\texoscale-api-endpoint: %s\n", *exo_endpoint))
@@ -214,9 +218,9 @@ func main() {
 			fmt.Fprintf(os.Stderr, "cannot build peer list from security-group: %s\n", err)
 			os.Exit(1)
 		}
-		engine = exoip.NewWatchdogEngine(ego, *eip, *timer, *prio, *dead_ratio, sgpeers)
+		engine = exoip.NewWatchdogEngine(ego, *eip, *timer, *prio, *dead_ratio, *setnic_ratio, sgpeers)
 	} else {
-		engine = exoip.NewWatchdogEngine(ego, *eip, *timer, *prio, *dead_ratio, peers)
+		engine = exoip.NewWatchdogEngine(ego, *eip, *timer, *prio, *dead_ratio, *setnic_ratio, peers)
 	}
 	exoip.Logger.Info("starting watchdog")
 	go engine.NetworkAdvertise()
